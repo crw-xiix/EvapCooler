@@ -1,0 +1,22 @@
+//console.log(data);
+                /*
+                //$("#dTemp").html("Temp: " + data.Temp + " F");
+                $("#dWater").html("Water:" + data.Water + " Inches");
+                
+                                gauges[0].value = data.Temp;
+                                //$("#tempGauge").attr('value', data.Temp);
+                                //$("#dWind").html("Wind: " + data.Wind + " mph");
+                                gauges[1].value = (data.Wind).toFixed(1);
+                                gauges[2].value = (data.Time);
+                                $("#dWater").html("Water:" + data.Water + " Inches");
+                                $("#dPump").html("Cooler Pump:" + data.Pump);
+                                $("#dFan").html("Cooler Fan:" + data.Fan);
+                                $("#dThermo").html("Thermo:" + data.Thermostat);
+
+                                if (data.Led == true) {
+                                    $("#bLed").addClass("btn-success");
+                                } else {
+                                    $("#bLed").removeClass("btn-success");
+                                }
+                                */
+                //                $("#dRaw").html(data);
