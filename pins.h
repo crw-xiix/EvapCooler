@@ -21,6 +21,7 @@ GP15 D8 Cooler Fan - Out
 #define PIN_THERMOSTATC D7		//GP14 D7 Thermostat - In
 #define PIN_WATER_IN	D0			//GP14 D0 Water Level - In
 #define PIN_WATER_OUT	D5		//GP12 D5 Water Level - Out
+#define PIN_RPM_IN		D6			//Hall effect sensor on RPMs
 #define PIN_FAN_OUT		D8			//GP15 D8 Cooler Fan - Out 
 #define PIN_PUMP_OUT	D3			//GP0  D3 Water Pump - Out
 

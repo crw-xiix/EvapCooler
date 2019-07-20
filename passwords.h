@@ -1,4 +1,6 @@
-#pragma once
+#ifndef __passwords_h_
+#define __passwords_h_
+
 
 //The name of the device
 const char *wifiHostName = "Chicken";
@@ -11,6 +13,7 @@ const char *wifiPassword = "slipperywhendusty";
 //IE:  192,168,0,1
 
 #define DEVICE_IP 192,168,89,101
+
 #define DEVICE_GATEWAY 192,168,89,1
 #define DEVICE_SUBNET 255,255,255,0
 #define DEVICE_DNS1 8,8,8,8
@@ -19,6 +22,8 @@ const char *wifiPassword = "slipperywhendusty";
 // Charles's place
 #define DEVICE_LAT 37.676
 #define DEVICE_LON -118.087
+
+#define DEVICE_PASSWORD "ne1410s"
 
 //Jordan's place
 /*
@@ -32,6 +37,5 @@ const char *wifiPassword = "slipperywhendusty";
 //#define DEVICE_TZ -7  //Mountain standard time/pacific daylight
 //#define DEVICE_TZ -6  //Central standard time
 //#define DEVICE_TZ -5  //Eastern standard time
-
-
+#endif
 

@@ -2,6 +2,7 @@
 #ifndef output_h
 #define output_h
 
+#include <ESP8266WiFi.h>
 //Forwards....
 
 //extern WifiClient;

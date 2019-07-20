@@ -1,0 +1,8 @@
+//Must output the website with no external refs, just plain html...
+//Use % % % (with no spaces) to represent a line converted, it will be repeated
+#include "outputEdit.h"
+
+void outputEditSite(void (*printFunction)(const char *) ) {
+	printFunction("%%%");
+}
+

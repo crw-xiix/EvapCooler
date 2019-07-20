@@ -1,0 +1,66 @@
+<HTML>
+<HEAD>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <title>====TITLE====</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <TITLE></TITLE>
+</HEAD>
+<BODY>
+
+    <div class="container">
+        <h2>Add Edit Tasks</h2>
+        <form class="form-horizontal" action="/">
+            <div class="form-group col-sm-6">
+
+                <label class="control-label " for="desc">Task ID:</label>
+                <input type="text" class="form-control" id="taskID" placeholder="" name="description" value="12345" disabled>
+
+                <label class="control-label " for="desc">Task Description:</label>
+                    <input type="text" class="form-control" id="desc" placeholder="Enter Description" name="description">
+
+                <label for="sel1" >Select list (select one):</label>
+                <select class="form-control" id="sel1">
+                    <option value="1">Open</option>
+                    <option>Close</option>
+                    <option>Cycle</option>
+                    <option>Lights On</option>
+                    <option>Lights Off</option>
+                </select>
+            </div>
+
+            <div class="checkbox">
+                <label><input type="checkbox" value="">Excute on restart</label>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label " for="desc">Task Execution Time:</label>
+                <!--Takes 14:23 and 23.75 (as 11:30pm)-->
+                <input type="text" class="form-control col-sm-2" id="desc" placeholder="Time" name="description">
+
+                <div class="radio">
+                    <label><input type="radio" name="optradio" checked>Normal Time</label>
+                </div>
+                <div class="radio">
+                    <label><input type="radio" name="optradio">Sunrise offset</label>
+                </div>
+                <div class="radio disabled">
+                    <label><input type="radio" name="optradio">Sunset offset</label>
+                </div>
+
+                </div>
+
+
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <button type="submit" class="btn btn-default">Submit</button>
+                    </div>
+                </div>
+</form>
+    </div>
+
+</BODY>
+</HTML>

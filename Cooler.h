@@ -16,20 +16,16 @@ We have some states to deal with here.
 */
 
 
-
 class EvapCooler {
 public:
-	enum TriState {
-		Off,
-		Automatic,
-		On
-	};
+	
 	//For tristate switches 
 	const int SettingOff = 0;
 	const int SettingAuto = 1;
 	const int SettingOn = 2;
 private:
 	//These times are in milliseconds
+	bool sunIsUp = true;
 	unsigned long StartTime;
 	//Last time we turned off the water pump;
 	unsigned long lastShutOffTime;
@@ -41,10 +37,9 @@ private:
 	int fanPin;
 	int thermoCoolPin;
 	int thermoFanPin;
-
+	int rpmPin;
 	//Some overrides.
-	TriState fanSetting = Automatic;
-	TriState pumpSetting = Automatic;
+	//Mode switches are now in config............
 
 private: //Settings for times.... note this is in millis
 	unsigned long maxDelay = (1000 * 60 * 2);   //2 Minutes
@@ -54,21 +49,34 @@ private: //Settings for times.... note this is in millis
 	unsigned long lastCycleTime = 0;
 private: //Internals for stuff
 	bool lastThermState = false;  //Off
-	float lastTemp = 30.0f;
+	bool lastThermState_ShortCycle = false;
+	//These are reading from gauges
+	float lastInTemp = 30.0f;
+	float lastOutTemp = 30.0f;
+	float lastRemoteTemp = 30.0f;
+	float lastAtticTemp = 30.0f;
+	//This is the setpoint for operation, default off (0)
+	float thermostatTemp = 0.0f;
+	/*public class {
+		float operator() { return 
+	};*/
 
 public:
-	EvapCooler(int iPumpPin, int iFanPin, int iCoolTPin, int iFanTPin);
+	EvapCooler(int iPumpPin, int iFanPin, int iCoolTPin, int iFanTPin, int iRPMPin);
 
 	float getLastTemp();
-	void setTempC(float val);
-
+	void setInTempF(float val);
+	void setOutTempF(float val);
+	void setRemoteTempF(float val);
+	//Less than 32F means use the wall thermostat
+	void setThermostatTemp(float val);
+	void setAtticTemp(float val);
 	void reset();  //Act like the power just came on...
 
-	void overrideFan(TriState val);
-	void overridePump(TriState val);
 
 	void statsToJson(void(*printFunction)(const char *));
 
+	void setSunStatus(bool val);
 
 	bool getPumpStatus();
 	bool getFanStatus();

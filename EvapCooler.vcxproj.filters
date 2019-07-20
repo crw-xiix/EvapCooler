@@ -24,6 +24,10 @@
     </None>
     <None Include="Web.config" />
     <None Include="clcok.html" />
+    <None Include="WebTaskEdit.htm" />
+    <None Include="edit.html" />
+    <None Include="schedule.json" />
+    <None Include="triStateControl.html" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.EvapCooler.vsarduino.h">
@@ -62,6 +66,30 @@
     <ClInclude Include="astronomical.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TLog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RemoteSensor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="menu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScheduleConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScheduleObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="crc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mcp.cpp">
@@ -92,6 +120,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="astronomical.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RemoteSensor.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ScheduleConfig.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ScheduleObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="crc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

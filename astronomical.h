@@ -7,7 +7,7 @@
 
 class SunSet {
 public:
-	SunSet();
+	SunSet() = default;
 	SunSet(double, double, int);
 	~SunSet();
 

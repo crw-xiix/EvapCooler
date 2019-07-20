@@ -1,0 +1,238 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <title>{%1} - Edit Config</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+
+    <script>
+        String.prototype.formatUnicorn = String.prototype.formatUnicorn ||
+            function () {
+                "use strict";
+                var str = this.toString();
+                if (arguments.length) {
+                    var t = typeof arguments[0];
+                    var key;
+                    var args = ("string" === t || "number" === t) ?
+                        Array.prototype.slice.call(arguments)
+                        : arguments[0];
+
+                    for (key in args) {
+                        str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), args[key]);
+                    }
+                }
+                return str;
+            };
+
+        function refresh() {
+            $.getJSON("/data.json", function (data) {
+                console.log(data);
+            });
+        }
+
+        function timerHit() {
+        }
+
+        function loadIt() {
+            $.getJSON("/data.json", function (data) {
+            });
+        }
+
+        function logButton() {
+            $.get("/log.json", function (data) {
+                $("#dLog").html(data);
+            });
+        }
+        function FillPage() {
+        }
+        function huh() {
+            $.getJSON("/config.json", function (data) {
+                $("#DName").val(data.Title);
+                $("#DVersion").val(data.Version);
+                $("#DST").prop('checked', data.DST);
+                $("#DDayTemp").val(data.DayTemp);
+                $("#DNightMax").val(data.NightMax);
+                $("#DNightMin").val(data.NightMin);
+                $("#DFanMode").val(data.FanMode);
+                $("#DPumpMode").val(data.PumpMode);
+                $("#DVacationMode").val(data.VacationMode);    //off/on
+            });
+        }
+
+        function loadTaskItems(items) {
+            for (i = 0; i < items.length; i++) {
+                $('.taskList').append($('<option>', items[i]));
+            }
+        }
+        function loadTaskForm(items) {
+            for (i = 0; i < items.length; i++) {
+                var st = items[i].task + ' ';//Just so we have something to split, just in case
+                var postVert = st.split("|");
+                var postColon = postVert[0].split(":");
+                var ttask = postColon[0];
+                var others = postColon[1].split(",");
+                //Now we can set the values on screen
+                $("#task" + i).val(ttask);
+                $("#time" + i).val(others[0]);
+                $("#sunrise" + i).prop('checked', (others[1] != 0));
+                $("#sunset" + i).prop('checked', (others[2] != 0));
+                $("#option" + i).val(postVert[1].trim());
+            }
+        }
+
+        function sendData() {
+            var st = "{\n";
+            st += "Password=" + $("#DPassword").val() + ",\n";
+            st += "Title=" + $("#DName").val() + ",\n";
+            st += "Version=" + $("#DVersion").val() + ",\n";
+            
+            st += "DST=";
+            if ($("#DST").prop('checked')) {
+                st += "1";
+            } else { st += "0"; }
+            st += ",\n";
+
+            st += "FanMode=" + $("#DFanMode").val() + ",\n";
+            st += "PumpMode=" + $("#DPumpMode").val() + ",\n";
+            st += "VacationMode=" + $("#DVacationMode").val() + ",\n";
+            st += "DayTemp=" + $("#DDayTemp").val() + ",\n";
+            st += "NightMax=" + $("#DNightMax").val() + ",\n";
+            st += "NightMin=" + $("#DNightMin").val() + ",\n";
+
+
+            st += "END\n";
+            st += "}\n";
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/SetConfig', true);
+            xhr.setRequestHeader('Content-Type', 'text/html; charset=UTF-8');
+
+            // send the collected data as JSON
+            xhr.send(st);
+            console.log(st);
+            xhr.onloadend = function () {
+                //window.location.href = "/";
+            };
+        }
+        function back() {
+            window.location.href = "/";
+        }
+        $(document).ready(function () {
+            huh();
+            $("#bSave").click(sendData);
+            $("#bBack").click(back);
+            FillPage();
+        });
+
+    </script>
+
+</head>
+<!-- test -->
+<body>
+    <div class="container">
+        <div class="jumbotron">
+<h1>{%3}</h1>
+            <h2>Edit Setup</h2>
+            <label for="DName">Device Name:</label>
+            <input type="text" class="form-control" id="DName">
+            <label for="DVersion">Device Version:</label>
+            <input type="text" class="form-control" id="DVersion">
+            <br />
+            <label class="checkbox-inline"><input type="checkbox" id="DST" value="">Daylight Savings Time</label><br />
+            <br />
+            <div class="well">
+                <div class="row">
+                    <div class="col">
+                        <h2>Maintenance</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label for="DFanMode">Fan Mode</label>
+                        <select class="form-control" id="DFanMode">
+                            <option value="0">Off</option>
+                            <option value="1">Auto</option>
+                            <option value="2">On</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label for="DPumpMode">Pump Mode</label>
+                        <select class="form-control" id="DPumpMode">
+                            <option value="0">Off</option>
+                            <option value="1">Auto</option>
+                            <option value="2">On</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label for="DVacationMode">Vacation Mode</label>
+                        <select class="form-control" id="DVacationMode">
+                            <option value="0">Off</option>
+                            <option value="1">On</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <br />
+            <br />
+            <div class="well">
+                <div class="row">
+                    <div class="col">
+                        <h2>Thermostat</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label for="DDayTemp">Daytime F</label>
+                        <input type="text" class="form-control" id="DDayTemp">
+                    </div>
+                    <div class="col">
+                        <label for="DNightMax">Night Max F</label>
+                        <input type="text" class="form-control" id="DNightMax">
+                    </div>
+                    <div class="col">
+                        <label for="DNightMin">Night Min F</label>
+                        <input type="text" class="form-control" id="DNightMin">
+                    </div>
+                </div>
+                <br />
+
+                <div class="row text-right">
+                    <div class="col">&nbsp;</div><div class="col">&nbsp;</div>
+                    <div class="col">
+                        <button type="button" class="btn btn-success" id="bSavePromt" data-toggle="modal" data-target="#myModal">Save</button>
+                        <button type="button" class="btn btn-success" id="bBack">Back</button>
+                    </div>
+                </div>
+                <div class="modal fade" id="myModal" role="dialog">
+                    <div class="modal-dialog">
+
+                        <!-- Modal content-->
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title text-center">Save settings to EEPROM</h4>
+                            </div>
+                            <div class="modal-body">
+                                <p>A password is required to update the configuration settings on this device.  Please call (800) FUC-KYOU ext:ASSHOLE to get your password for this device.</p>
+                                <label for="DPassword">EEPROM write password:</label>
+                                <input type="password" class="form-control" id="DPassword">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-default" data-dismiss="modal" id="bSave">Save</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

@@ -19,6 +19,7 @@ private:
 public:
 
 	WebLog(int isize);
+	int FreeRam();
 	void It(float time, const char *message);
 	void println(const char *msg);
 	void Print(void(*printFunction)(const char *));

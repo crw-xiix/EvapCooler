@@ -15,6 +15,7 @@ NetTime::NetTime() {
 	secsPastMid = 0;
 	lastTime = millis();
 	secsSinceLastTimeUpdate = 0;  //Trigger it to look
+	runTime = 0;
 }
 
 void NetTime::Init(long iTZ) {
@@ -36,6 +37,8 @@ void NetTime::setTime(int h, int m, int s) {
 void NetTime::setTimeSecs(int s) {
 	secsSinceLastTimeUpdate = 0;
 	secsPastMid = s;
+	
+	
 }
 
 long NetTime::getTimeSec() {
@@ -46,6 +49,10 @@ float NetTime::getHourFloat() {
 	return secsPastMid / 3600.0f;
 }
 
+float NetTime::getRunTimeHours() {
+	return runTime / 3600.0f;
+}
+
 TimeODay NetTime::getTime() {
 	TimeODay time;
 	time.second = (secsPastMid % 60);
@@ -53,15 +60,20 @@ TimeODay NetTime::getTime() {
 	time.hour = secsPastMid / 24;
 	return time;
 }
-	//We are just going to assume we get called once a second...
+
+//We are just going to assume we get called once a second...
 void NetTime::process() {
 	if ((millis() - lastTime) > 1000) {
 		//for rollover
 		lastTime += ((unsigned long)1000);
 		secsPastMid++;
 		secsSinceLastTimeUpdate++;
-		if (secsPastMid >= 86400ul) {
+		runTime++;
+		if ((secsPastMid >= 86400ul)||(triggerReload)) {
+			triggerReload = false;
+			invalidTime = true;
 			secsPastMid = secsPastMid % 86400ul;
+			if (funcMidnight != NULL) funcMidnight();
 			//Trigger a time update if it's there, otherwise continue
 			//With whatever we had before.
 			first = true;
@@ -72,7 +84,6 @@ void NetTime::process() {
 
 // On the hour for now...
 bool NetTime::needNewTime() {
-	//if (secsSinceLastTimeUpdate > (60)) return true; // On the minute for now...
 	if (secsSinceLastTimeUpdate > (3600)) return true; // On the hour for now...
 	return false;
 }
@@ -141,12 +152,17 @@ void NetTime::checkTimeRequest() {
 		day = timeResult->tm_mday;
 		year = timeResult->tm_year+1900;
 
-		sprintf(buffer, "Current Date: %02d/%02d/%02d", month, day, year);
-		webLog.It(-1, buffer);
+		//This way, if we want to show the time, we can......
+		setTimeSecs(epoch % 86400ul);
 
-		if (GotNewTime != NULL) GotNewTime();
+		if (funcTimeCalc != NULL) funcTimeCalc();
 
-		webLog.It(-1, "Time received");
+		
+		if (invalidTime) {
+			invalidTime = false;
+			//Fire off a function.......
+			if (funcTimeValid != NULL) funcTimeValid();
+		}
 	}
 	// wait ten seconds before asking for the time again
 }

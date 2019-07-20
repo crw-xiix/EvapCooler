@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<head>
+    <style>
+        .activeTri {
+            fill: rgb(240,240,20);
+        }
+
+        #triPump .triOff {
+            fill: rgb(240,240,20);
+        }
+    </style>
+</head>
+<html>
+<body>
+
+    <svg height="100" width="300" id="triPump">
+        <defs>
+            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%"
+                      style="stop-color:rgb(255,255,0);stop-opacity:1" />
+                <stop offset="100%"
+                      style="stop-color:rgb(255,0,0);stop-opacity:1" />
+            </linearGradient>
+        </defs>
+        <rect width="300" height="100" style="fill:rgb(200,200,200);stroke-width:10;stroke:rgb(125,125,125);" />
+
+        <ellipse cx="50" cy="50" rx="40" ry="40" class="triOff" />
+        <ellipse cx="150" cy="50" rx="40" ry="40" class="triAuto" />
+        <ellipse cx="250" cy="50" rx="40" ry="40" class="triOn" />
+        <text fill="#7f7f7f" text-anchor="middle" font-size="25" font-family="Verdana" x="50" y="60">Off</text>
+        <text fill="#7f7f7f" text-anchor="middle" font-size="25" font-family="Verdana" x="150" y="60">Auto</text>
+        <text fill="#7f7f7f" text-anchor="middle" font-size="25" font-family="Verdana" x="250" y="60">On</text>
+
+    </svg>
+    <svg>
+        <script type="text/javascript">
+    <![CDATA[
+    var redVal = 0;
+    var greenVal = 0;
+    var blueVal = 0;
+
+    function changeCol(evt) {
+       redVal = Math.round(Math.random() * 255);
+       greenVal = Math.round(Math.random() * 255);
+       blueVal = Math.round(Math.random() * 255);
+       evt.target.setAttribute("fill",
+             "rgb(" + redVal + "," + greenVal + "," + blueVal + ")");
+    }
+    // ]]>
+        </script>
+        <circle cx="200" cy="200" r="100" fill="blue"
+                onclick="changeCol(evt)" />
+    </svg>
+</body>
+</html>

@@ -2,14 +2,14 @@
 
 //This was snagged from github, I forgot the source.......
 
-
+/*
 SunSet::SunSet()
 {
 	latitude = 0.0;
 	longitude = 0.0;
 	julianDate = 0.0;
 	tzOffset = 0;
-}
+}*/
 
 SunSet::SunSet(double lat, double lon, int tz)
 {

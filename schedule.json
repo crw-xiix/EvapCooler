@@ -1,0 +1,33 @@
+{
+    "Title": "Chicken Raper",
+    "Version": "Model: Deluxe Ass Grinder 5000",
+    "DST": false,
+    "TasksTotal": 20,
+    "TaskItems": [
+        {
+            "value": 1,
+            "text": "Open Door"
+        },
+        {
+            "value": 2,
+            "text": "Close Door"
+        },
+        {
+            "value": 3,
+            "text": "Light On"
+        },
+        {
+            "value": 4,
+            "text": "Light Off"
+        },
+        {
+            "value": 5,
+            "text": "Log Message"
+        }
+    ],
+    "Tasks": [
+        { "task": "5:0.0,1,0,Good morning" },
+        { "task": "1:-0.5,1,0,65" },
+        { "task": "2:0.5,0,1,68" }
+    ]
+}

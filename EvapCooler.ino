@@ -32,17 +32,29 @@ python.exe "C:\Users\charles\AppData\Local\arduino15\packages\esp8266\hardware\e
 #include <BearSSLHelpers.h>
 #include <Wire.h>
 */
+#include <ESP8266WebServerSecureBearSSL.h>
+#include <ESP8266WebServerSecureAxTLS.h>
+#include <ESP8266WebServerSecure.h>
+#include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <time.h>
 #include <ArduinoOTA.h>
-
+#include <functional>
+#include <algorithm>
+#include "Blocker.h"
 
 //Water level
 #include "Ultrasonic.h"
 //Temperature
 #include "mcp.h"
-//Wensite
+
+//Website
 #include "output.h"
+
+//Website Edit
+#include "outputEdit.h"
+
+
 //Input/Output pins
 #include "pins.h"
 //Wind sensor
@@ -61,7 +73,14 @@ python.exe "C:\Users\charles\AppData\Local\arduino15\packages\esp8266\hardware\e
 #include "OTASetup.h"
 //Sunrise and Sunset calculations
 #include "./astronomical.h"
+//Remote Temp gauge
+#include "RemoteSensor.h"
 
+//Config
+#include "ScheduleConfig.h"
+
+///Readbytes
+#include "8266IO.h"
 
 
 #define ledPin 2
@@ -87,9 +106,15 @@ IPAddress dns2(DEVICE_DNS2);
 Ultrasonic ultrasonic(PIN_WATER_OUT, PIN_WATER_IN);
 float distance;
 
-MCP9808 mcp = MCP9808();
+MCP9808 mcpInside = MCP9808();
+MCP9808 mcpOutside = MCP9808();
+
 
 WiFiServer server(80);
+
+RemoteSensor remoteSensor = RemoteSensor();
+Blocker blocker = Blocker();
+
 
 void EEWriteStr(int dest, char *src, int max) {
 	int sp = 0;
@@ -107,71 +132,70 @@ void EEReadStr(int src, char *dest, int max) {
 	}
 }
 
-double sunRise = 6;
-double sunSet = 6;
 
-void dummy() {
+bool isTheSunUp() {
+	float time = netTime.getHourFloat();
+	if ((time >= sConfig.Sunrise) && (time <= sConfig.Sunset)) return true;
+	return false;
+}
+
+void OnNewTime() {
 	
 	SunSet sun = SunSet();
-	sun.setPosition(DEVICE_LAT, DEVICE_LON, DEVICE_TZ);
+	int tz = DEVICE_TZ;
+	if (sConfig.DST) tz++;
+	sun.setPosition(DEVICE_LAT, DEVICE_LON, tz);
 	sun.setCurrentDate(netTime.year, netTime.month, netTime.day);
-	sunRise = sun.calcSunrise()/60;
-	sunSet = sun.calcSunset()/60;
+	sConfig.Sunrise = sun.calcSunrise() / 60;
+	sConfig.Sunset = sun.calcSunset() / 60;
 	char buffer[80];
-	snprintf(buffer, 80, "Sunrise:%f Sunset:%f", sunRise, sunSet);
-
+	snprintf(buffer, 80, "Date: %d/%d/%d Time: %2.2f Rise:%f Set:%f",
+		netTime.month,
+		netTime.day,
+		netTime.year,
+		netTime.getHourFloat(),
+		sConfig.Sunrise, 
+		sConfig.Sunset);
 	webLog.println(buffer);
 }
 
-EvapCooler cooler(PIN_PUMP_OUT, PIN_FAN_OUT, PIN_THERMOSTATC, PIN_THERMOSTATC);
+EvapCooler cooler(PIN_PUMP_OUT, PIN_FAN_OUT, PIN_THERMOSTATC, PIN_THERMOSTATC, PIN_RPM_IN);
 
+void OnMidnight() {
+	blocker.Clear();
+}
 
 
 void setup() {
-	String st;
-	EEPROM.begin(512);
-	Serial.begin(9600);
-	delay(100);
-
-
-
+	char st[120];
+	Serial.begin(115200);
 	//Test and see if it's valid data.......  This is our signature.......
 	webLog.It(-1, "System Startup");
 	webLog.It(-1, "Reading EEPROM");
-	if ((EEPROM.read(0) == 'C') &&
-		(EEPROM.read(1) == 'R') &&
-		(EEPROM.read(2) == 'W') &&
-		(EEPROM.read(3) == 0)) {
-		char str[40];
-		//Good EEPROM (hah)
-		char myStr[40];
 
-		EEReadStr(4, myStr, 40);
-	}
-	else {
-		webLog.It(-1, "Writing EEPROM data");
-		EEWriteStr(0, "CRW", 4);
-		EEWriteStr(4, "Testing", 40);
-		EEPROM.commit();
-	}
-
-
-
-
-	int j[10];
-	j[5] = 4;
-	int p = 5[j];
-
-
-	//pinMode(TRIG, OUTPUT);
+	sConfig = sConfig.LoadFromEEPROM();
+	sConfig.SetPassword(DEVICE_PASSWORD);
+	
 	pinMode(ledPin, OUTPUT);
 
-	if (!mcp.begin()) {
-		webLog.It(-1, "Couldn't find MCP9808!");
+	if (!mcpInside.begin()) {
+		webLog.It(-1, "MCP9808-Inside Not Found!");
 	}
 	else {
-		webLog.It(-1, "Found MCP9808!");
+		webLog.It(-1, "Found MCP9808 Inside!");
 	}
+	if (!mcpOutside.begin(0x19)) {
+		webLog.It(-1, "MCP9808-Outside Not Found!");
+	}
+	else {
+		webLog.It(-1, "Found MCP9808 Outside!");
+	}/*
+	if (!mcp2ndFloor.begin(0x1a)) {
+		webLog.It(-1, "MCP9808-2ndFloor Not Found!");
+	}
+	else {
+		webLog.It(-1, "Found MCP9808 2ndFloor!");
+	}*/
 
 	Wire.setClock(10000);
 
@@ -179,10 +203,8 @@ void setup() {
 	WiFi.mode(WIFI_STA);
 
 	WiFi.hostname(wifiHostName);
-	st = "Connecting to:";
-	st += wifiNetwork;
-
-	webLog.It(-1, st.c_str());
+	sprintf(st, "Connecting to: %d", wifiNetwork);
+	webLog.It(-1, st);
 
 	WiFi.config(ip, gateway, subnet, dns1, dns2);
 	WiFi.begin(wifiNetwork, wifiPassword);
@@ -192,64 +214,45 @@ void setup() {
 		delay(125);
 		digitalWrite(ledPin, HIGH);
 		delay(125);
-		digitalWrite(ledPin, LOW);
-		delay(125);
-		digitalWrite(ledPin, HIGH);
-		delay(125);
-		digitalWrite(ledPin, LOW);
-		delay(125);
-		digitalWrite(ledPin, HIGH);
-		delay(125);
-		digitalWrite(ledPin, LOW);
-		delay(125);
-		digitalWrite(ledPin, HIGH);
 	}
-
+	//Exit with the LED OFF.
+	
 	SetupOTA("EvapCooler-ESP8235");
 
+	if (sConfig.DST) {
+		netTime.Init(DEVICE_TZ+1);
+	}
+	else {
+		netTime.Init(DEVICE_TZ);
+	}
 
-	netTime.GotNewTime =dummy;
-	netTime.Init(-8);
+	netTime.funcTimeValid = OnMidnight;
+	netTime.funcTimeCalc = OnNewTime;
 	netTime.process();
 
 	// Start the server
 	server.begin();
 	webLog.println("Server started:");
 
-	webLog.println(WiFi.localIP().toString().c_str());
-
-
-
-	//int sz = EEPROM.read(1);
-	/*
-	Gsender *gsender = Gsender::Instance();    // Getting pointer to class instance
-	Sdtring subject = "ESP8285 Water monitoring system";
-	if(gsender->Subject(subject)->Send("charles@loneaspen.com", "The system has been restarted after a power down.")) {
-	Serial.println("Message sent.");
-	} else {
-	Serial.print("Error sending message: ");
-	Serial.println(gsender->getError());
-	}
-	*/
-
 	//	WindSensor::Init(PIN_WIND_SPEED_IN, 5.0f);
-
 	cooler.reset();
-
-
+	remoteSensor.begin(3000);
 }
-
 
 float lastWaterLevel = 0;
 float lastTemp = 0.0f;
 
-//volatile float lastHz = 0;
-
-
 WiFiClient *tempClient = NULL;
 
 
+bool blocked = false;
+
+
+
 void loop() {
+	
+
+	ESP.wdtFeed();
 	//For reprogramming
 	ArduinoOTA.handle();
 	//Lets us know the program is running.......
@@ -259,10 +262,18 @@ void loop() {
 
 	cooler.process();
 
-	mcp.readSensor();
-	lastTemp = mcp.getTemperature_F();
+	mcpInside.readSensor();
+	mcpOutside.readSensor();
 
-	cooler.setTempC(lastTemp);
+
+	
+
+	lastTemp = mcpInside.getTemperature_F();
+
+
+	cooler.setInTempF(lastTemp);
+	cooler.setOutTempF(mcpOutside.getTemperature_F());
+	cooler.setSunStatus(isTheSunUp());
 
 	distance = ultrasonic.read();
 
@@ -273,15 +284,35 @@ void loop() {
 	// 25 sample running/rolling average
 	lastWaterLevel = (lastWaterLevel * 24.0f + tempWaterLevel) / 25.0f;
 
+	remoteSensor.process();
+
+	//1 is the 2nd floor temp gauge......
+
+	cooler.setRemoteTempF(remoteSensor.getValue(1));
+	cooler.setAtticTemp(remoteSensor.getValue(2));
+
+
+	//Loop out if we lose WiFi
+	while (WiFi.status() != WL_CONNECTED) {
+		delay(50);
+		return;
+	}
+
+	/* Everything else after this is the website, so all fucntions have to be above*/
+
 	WiFiClient client = server.available();
+
+	
+
+
 	int lps = 0;
+
+	
 
 	while (client == NULL)
 	{
-		if (lps > 100) return;  //Skip wifi stuff.
-		delay(1);
-		client = server.available();
-		lps++;
+		delay(10);
+		return;  //Skip wifi stuff.
 	}
 
 	// Wait until the client sends some data
@@ -294,60 +325,167 @@ void loop() {
 		if (lps > 200) return;  //Skip wifi stuff.
 	}
 
+
 	//Bail out, something failed.
 	if (!client.connected()) return;
 
+	if (blocker.IsBlocked(client.remoteIP(),netTime.getHourFloat())) blocked = true;
+
+
+
 	// Read the first line of the request
 	char request[160];
-	size_t bytes = client.readBytesUntil('\r', request, 160); // as readBytes with terminator character
-//	String request = client.readStringUntil('\r');
-	//Serial.println(request);
+	readBytesUntil(client,request,'\r', 160,250); // as readBytes with terminator character
 	client.flush();
 	if (!client.connected()) return;
 	// Match the request
 	int value = LOW;
+	
+	do {
+		if (strstr(request, "/log") != NULL) {
+			printHeader(client, "text/html");
+			website_log(client);
+			break;
+		}
+		if (strstr(request, "/edit") != NULL) {
+			tempClient = &client;
+			outputEditSite(&clientPrint);
+			tempClient = NULL;
+			break;
+		}
+		if ((strstr(request, "POST /SetConfig"))) {
+			if (!blocked) {
+				webLog.println("Setting Configuration");
+				if (!sConfig.HandlePostData(client)) {
+					blocker.BlockIP(client.remoteIP(), netTime.getHourFloat());
+					webLog.println("Blocked a user");
+				}
+				printHeader(client, "text/html");
+				client.println("Config Set");
+			}
+			else {
+			}
+			break;
+		}
+		if (strstr(request, "/config.json") != NULL) {
+			if (!blocked) {
+				printHeader(client, "application/json");
+				sConfig.OutputJson(&client);
+				break;
+			}
+		}
 
-	if (strstr(request,"/ToggleLed") != NULL) {
-		digitalWrite(ledPin, !digitalRead(ledPin));
-		client.println("<br>Updated<br>");
-		return;
-	}
-	if (strstr(request,"/log") != NULL) {
+		if (strstr(request, "/data.json") != NULL) {
+			printHeader(client,"application/json");
+
+			client.println("{");
+			client.printf("\"Temp\": %f,\n", lastTemp);
+
+			client.printf("\"Time\":%f,\n", netTime.getHourFloat());
+
+			client.printf("\"SunRise\":%lf,\n", sConfig.Sunrise);
+
+			client.printf("\"SunSet\":%lf,\n", sConfig.Sunset);
+
+			tempClient = &client;
+			cooler.statsToJson(&clientPrint);
+			tempClient = NULL;
+
+			client.printf("\"Water\" : %3.2f\n", lastWaterLevel);
+			client.println("}");
+			break;
+		}
+		// Return the response
 		tempClient = &client;
-		webLog.PrintReverse(clientPrint);
+		outputSite(&clientPrint);
 		tempClient = NULL;
-		return;
-	}
-	if (strstr(request,"/data.json") != NULL) {
-		client.println("{");
-		client.printf("\"Temp\": %f,", lastTemp);
-
-		client.printf("\"Time\":%f,\n", netTime.getHourFloat());
-
-		client.printf("\"SunRise\":%lf,\n", sunRise);
-
-		client.printf("\"SunSet\":%lf,\n", sunSet);
-
-		tempClient = &client;
-		cooler.statsToJson(&clientPrint);
-		tempClient = NULL;
-
-		client.printf("\"Water\" : %f ", lastWaterLevel);
-
-		client.println("}");
-
-		return;
-	}
-
-	// Return the response
-	tempClient = &client;
-	outputSite(&clientPrint);
-	tempClient = NULL;
+	} while (0);
+	client.flush();
 	delay(5);
 }
 
 
+
+void website_log(WiFiClient c) {
+	tempClient = &c;
+	printHeader(c, "text/html");
+	webLog.PrintReverse([](const char *d) {
+		tempClient->println(d);
+	});
+	tempClient = NULL;
+}
+
+void tempSet(const char *st) {
+	char buffer[80];
+	float v = -40.0f;
+	const char *p = strstr(st, "?");
+	if (p) {
+		
+		sscanf(p+1, "%f", &v);
+		sprintf(buffer, "Thermostat set to: %.1f F", v);
+		webLog.println(buffer);
+		webLog.println(st);
+
+		if (v >= 0.0f) {
+			cooler.setThermostatTemp(v);
+		}
+	}
+}
+
+///ctype:  application/json : text/html 
+void printHeader(WiFiClient client, const char *ctype) {
+	//application / json
+	client.println(F("HTTP/1.1 200 OK"));
+	client.print(F("Content-Type: "));
+	client.print(ctype);
+	client.println(F("; charset = UTF-8"));
+	client.println("");
+}
+
+
+char stackbuf[20];
+const char *getVarData(int val) {
+	switch (val) {
+	case 1: return sConfig.Title;
+	case 2: return sConfig.Version;
+	case 3: {
+		if (blocked) {
+			return "<h3>You are blocked from saving</h3>";
+		} return "";
+		break;
+	}
+	case 4: {
+		sprintf(stackbuf, "%.1f", sConfig.Sunrise);
+		return stackbuf;
+	}
+	case 5: {
+		sprintf(stackbuf, "%.1f", sConfig.Sunset);
+		return stackbuf;
+	}
+
+	default: return "Undefined";
+	}
+}
+
+
 void clientPrint(const char *data) {
+	int iid = 0;
+	//Simple replacement of title, version
+	const char *ptr = NULL;
+	ptr = strstr(data, "{%");
+	if (!tempClient->connected()) return;
+	if (ptr) {
+		tempClient->write(data, ptr - data);
+		ptr += 2;
+		if (sscanf(ptr, "%d", &iid) == 1) {
+			tempClient->print(getVarData(iid));
+		}
+		ptr += 2;
+		tempClient->println(ptr);
+		return;
+	}
 	tempClient->println(data);
 }
+
+
 
